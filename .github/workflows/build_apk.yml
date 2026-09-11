@@ -22,6 +22,16 @@ jobs:
       with:
         channel: 'stable'
 
+    - name: Generate Full Flutter Project
+      run: |
+        mkdir temp_project
+        cd temp_project
+        flutter create --org com.aliagunanusantara agn_patrol .
+        cp -r android/app/src/main/AndroidManifest.xml ../android/app/src/main/ 2>/dev/null || true
+        cp -r * ../
+        cd ..
+        rm -rf temp_project
+
     - name: Install Dependencies
       run: flutter pub get
 
