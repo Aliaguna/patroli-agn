@@ -23,14 +23,28 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Get Flutter dependencies
-      run: flutter pub get
-
-    - name: Build Release APK
-      run: flutter build apk --release
+    - name: Repair Android Structure & Build
+      run: |
+        # Backup file lib dan pubspec
+        mkdir -p ../temp_backup
+        cp -r lib ../temp_backup/
+        cp pubspec.yaml ../temp_backup/
+        
+        # Re-generate project struktur Android utuh
+        cd ..
+        flutter create --org com.aliaguna --project-name patroli_agn temp_app
+        
+        # Kembalikan file lib dan pubspec kita
+        cp -r temp_backup/lib/* temp_app/lib/
+        cp temp_backup/pubspec.yaml temp_app/pubspec.yaml
+        
+        # Build APK di folder yang sudah bersih
+        cd temp_app
+        flutter pub get
+        flutter build apk --release
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Patroli-AGN-Release-APK
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: ../temp_app/build/app/outputs/flutter-apk/app-release.apk
