@@ -22,27 +22,20 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Backup Custom Files & Generate Project
+    - name: Generate Complete App & Build
       run: |
-        mkdir -p backup_lib backup_android
-        cp -r lib/* backup_lib/ 2>/dev/null || true
-        cp -r android/app/src/main/AndroidManifest.xml backup_android/ 2>/dev/null || true
-        
-        mkdir temp_project
-        cd temp_project
-        flutter create --org com.aliagunanusantara agn_patrol .
-        flutter pub add mobile_scanner geolocator
-        cd ..
-        
-        cp -r temp_project/* ./
-        rm -rf temp_project
-        
-        cp -r backup_lib/* lib/ 2>/dev/null || true
-        cp -r backup_android/AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
-        rm -rf backup_lib backup_android
+        mkdir -p ../temp_save
+        cp -r lib ../temp_save/ 2>/dev/null || true
+        cp pubspec.yaml ../temp_save/ 2>/dev/null || true
+        cp android/app/src/main/AndroidManifest.xml ../temp_save/ 2>/dev/null || true
 
-    - name: Install Dependencies
-      run: flutter pub get
+        rm -rf * .github
+        flutter create --org com.aliagunanusantara .
+
+        cp -r ../temp_save/lib ./ 2>/dev/null || true
+        cp ../temp_save/AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
+        
+        flutter pub add mobile_scanner geolocator
 
     - name: Build APK
       run: flutter build apk --release
