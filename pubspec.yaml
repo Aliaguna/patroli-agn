@@ -1,5 +1,5 @@
 name: patroli_agn
-description: Aplikasi Patroli PT. Alia Guna Nusantara
+description: "Aplikasi Patroli PT. Alia Guna Nusantara"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,11 +9,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.6
+  permission_handler: ^11.3.1
+  mobile_scanner: ^5.1.1
+  geolocator: ^12.0.0
+  image_picker: ^1.1.2
+  excel: ^4.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
