@@ -26,19 +26,18 @@ jobs:
     - name: Repair Android Structure & Build
       run: |
         # Backup file lib dan pubspec
-        mkdir -p ../temp_backup
-        cp -r lib ../temp_backup/
-        cp pubspec.yaml ../temp_backup/
+        mkdir -p temp_backup
+        cp -r lib temp_backup/
+        cp pubspec.yaml temp_backup/
         
-        # Re-generate project struktur Android utuh
-        cd ..
+        # Re-generate project struktur Android utuh di dalam workspace
         flutter create --org com.aliaguna --project-name patroli_agn temp_app
         
-        # Kembalikan file lib dan pubspec kita
+        # Kembalikan file lib dan pubspec
         cp -r temp_backup/lib/* temp_app/lib/
         cp temp_backup/pubspec.yaml temp_app/pubspec.yaml
         
-        # Build APK di folder yang sudah bersih
+        # Build APK
         cd temp_app
         flutter pub get
         flutter build apk --release
@@ -47,4 +46,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Patroli-AGN-Release-APK
-        path: ../temp_app/build/app/outputs/flutter-apk/app-release.apk
+        path: temp_app/build/app/outputs/flutter-apk/app-release.apk
