@@ -110,7 +110,7 @@ class DashboardScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black80,
+                  color: Colors.black87,
                 ),
               ),
             ),
@@ -190,7 +190,7 @@ class DashboardScreen extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: Colors.black80,
+              color: Colors.black87,
             ),
           ),
         ],
