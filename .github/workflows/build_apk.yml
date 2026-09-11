@@ -27,14 +27,12 @@ jobs:
       run: |
         flutter create --org com.aliaguna --project-name patroli_agn temp_app
         
-        # Salin lib dan assets
         rm -rf temp_app/lib
         cp -r lib temp_app/lib
+        cp pubspec.yaml temp_app/pubspec.yaml
         
         if [ -d "assets" ]; then
           cp -r assets temp_app/
-          echo "  assets:" >> temp_app/pubspec.yaml
-          echo "    - assets/" >> temp_app/pubspec.yaml
         fi
         
         cd temp_app
