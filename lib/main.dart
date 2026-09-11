@@ -1,4 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const PatroliApp());
@@ -34,22 +41,12 @@ class DashboardScreen extends StatelessWidget {
         ),
         backgroundColor: const Color(0xFF1A237E),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tidak ada pemberitahuan baru.')),
-              );
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner Profil & Logo PT. AGN
+            // Banner Profil
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
@@ -59,83 +56,32 @@ class DashboardScreen extends StatelessWidget {
                   bottomRight: Radius.circular(24),
                 ),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      // Tempat Logo Perusahaan PT. AGN
-                      Container(
-                        width: 60,
-                        height: 60,
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 6,
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/logo.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              // Tampilan cadangan jika logo belum ter-upload
-                              return const Icon(Icons.shield, size: 36, color: Color(0xFF1A237E));
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Sistem Operasional Patroli',
-                              style: TextStyle(color: Colors.white70, fontSize: 13),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'PT. ALIA GUNA NUSANTARA',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
+                    width: 55,
+                    height: 55,
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Row(
-                          children: [
-                            Icon(Icons.location_on, color: Colors.greenAccent, size: 18),
-                            SizedBox(width: 8),
-                            Text(
-                              'Status GPS: Aktif',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          'Online',
-                          style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
-                        ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => const Icon(Icons.shield, size: 32, color: Color(0xFF1A237E)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Sistem Operasional Patroli', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        SizedBox(height: 4),
+                        Text('PT. ALIA GUNA NUSANTARA', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -144,22 +90,13 @@ class DashboardScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Menu Utama Patroli',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
+              child: Text('Menu Utama Patroli', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
             ),
-
             const SizedBox(height: 16),
 
-            // Grid Menu Fitur Aktif & Bisa Diklik
+            // Grid Menu Operasional
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: GridView.count(
@@ -169,117 +106,55 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
-                  _buildMenuCard(
+                  _buildCard(
+                    context: context,
+                    icon: Icons.assignment_turned_in,
+                    title: 'Formulir Laporan',
+                    subtitle: 'Input Insiden & PDF',
+                    color: Colors.redAccent,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (ctx) => const FormLaporanScreen())),
+                  ),
+                  _buildCard(
+                    context: context,
+                    icon: Icons.camera_front,
+                    title: 'Absen GPS Selfie',
+                    subtitle: 'Validasi Presensi Pos',
+                    color: Colors.orange,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (ctx) => const AbsenGpsScreen())),
+                  ),
+                  _buildCard(
                     context: context,
                     icon: Icons.qr_code_scanner,
                     title: 'Scan Checkpoint',
-                    subtitle: 'Pindai QR Pos',
+                    subtitle: 'Pindai Pos QR',
                     color: Colors.blue,
-                    onTap: () {
-                      _showActionDialog(context, 'Scan Checkpoint', 'Fitur Kamera QR Code siap digunakan untuk pemindaian pos.');
-                    },
+                    onTap: () => _showMsg(context, 'Fitur Scan Checkpoint siap diintegrasikan.'),
                   ),
-                  _buildMenuCard(
-                    context: context,
-                    icon: Icons.my_location,
-                    title: 'Absen GPS',
-                    subtitle: 'Validasi Lokasi',
-                    color: Colors.orange,
-                    onTap: () {
-                      _showActionDialog(context, 'Absen GPS', 'Koordinat GPS terkunci. Absensi presensi pos berhasil disimpan.');
-                    },
-                  ),
-                  _buildMenuCard(
-                    context: context,
-                    icon: Icons.assignment_turned_in,
-                    title: 'Laporan Kejadian',
-                    subtitle: 'Input Insiden',
-                    color: Colors.redAccent,
-                    onTap: () {
-                      _showActionDialog(context, 'Laporan Kejadian', 'Membuka formulir catatan kejadian & foto temuan.');
-                    },
-                  ),
-                  _buildMenuCard(
+                  _buildCard(
                     context: context,
                     icon: Icons.history,
                     title: 'Riwayat Patroli',
-                    subtitle: 'Log Pemeriksaan',
+                    subtitle: 'Log Aktivitas',
                     color: Colors.teal,
-                    onTap: () {
-                      _showActionDialog(context, 'Riwayat Patroli', 'Menampilkan log aktivitas petugas untuk hari ini.');
-                    },
+                    onTap: () => _showMsg(context, 'Riwayat Laporan Hari Ini Tersimpan.'),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Info Card Bawah
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.indigo.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.shield, color: Color(0xFF1A237E)),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'SERVE AND GUARD',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'PT. Alia Guna Nusantara - Aplikasi Patroli Pengamanan.',
-                              style: TextStyle(color: Colors.grey, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  static Widget _buildMenuCard({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  static Widget _buildCard({required BuildContext context, required IconData icon, required String title, required String subtitle, required Color color, required VoidCallback onTap}) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       elevation: 2,
-      shadowColor: Colors.black12,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        splashColor: color.withOpacity(0.2),
-        highlightColor: color.withOpacity(0.1),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -288,31 +163,15 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, color: color, size: 28),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
-                  ),
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
                   const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
                 ],
               ),
             ],
@@ -322,19 +181,276 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  static void _showActionDialog(BuildContext context, String menuTitle, String message) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(menuTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tutup', style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.bold)),
+  static void _showMsg(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SCREEN FORMULIR LAPORAN KEJADIAN & EKSPOR PDF
+// ---------------------------------------------------------------------------
+class FormLaporanScreen extends StatefulWidget {
+  const FormLaporanScreen({super.key});
+
+  @override
+  State<FormLaporanScreen> createState() => _FormLaporanScreenState();
+}
+
+class _FormLaporanScreenState extends State<FormLaporanScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _namaController = TextEditingController();
+  final _posController = TextEditingController();
+  final _deskripsiController = TextEditingController();
+  
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _takePhoto() async {
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    if (photo != null) {
+      setState(() {
+        _imageFile = File(photo.path);
+      });
+    }
+  }
+
+  Future<void> _generatePdf() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_imageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Harap ambil foto bukti kejadian terlebih dahulu!')));
+      return;
+    }
+
+    final pdf = pw.Document();
+    final imageBytes = await _imageFile!.readAsBytes();
+    final pdfImage = pw.MemoryImage(imageBytes);
+    final tanggal = DateFormat('dd MMMM yyyy - HH:mm').format(DateTime.now());
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(24),
+            child: pw.Column(
+              cross: pw.CrossAxisAlignment.start,
+              children: [
+                // Header PDF
+                pw.Center(
+                  child: pw.Column(
+                    children: [
+                      pw.Text('PT. ALIA GUNA NUSANTARA', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                      pw.Text('LAPORAN HASIL PATROLI & KEJADIEN OPERASIONAL', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 4),
+                      pw.Divider(),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 16),
+
+                // Detail Isian
+                pw.Text('Waktu Pelaporan : $tanggal'),
+                pw.SizedBox(height: 6),
+                pw.Text('Nama Petugas   : ${_namaController.text}'),
+                pw.SizedBox(height: 6),
+                pw.Text('Lokasi / Pos   : ${_posController.text}'),
+                pw.SizedBox(height: 16),
+
+                pw.Text('Deskripsi Kejadian / Temuan:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 6),
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey)),
+                  child: pw.Text(_deskripsiController.text, style: const pw.TextStyle(fontSize: 11)),
+                ),
+                pw.SizedBox(height: 20),
+
+                // Dokumentasi Foto
+                pw.Text('Dokumentasi Bukti Lapangan:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 10),
+                pw.Center(
+                  child: pw.Container(
+                    height: 220,
+                    child: pw.Image(pdfImage),
+                  ),
+                ),
+                pw.Spacer(),
+
+                // Tanda Tangan Footer
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(children: [pw.Text('Petugas Pelapor'), pw.SizedBox(height: 40), pw.Text(_namaController.text)]),
+                    pw.Column(children: [pw.Text('Mengetahui, Danru/HRD'), pw.SizedBox(height: 40), pw.Text('PT. AGN')]),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    // Buka Tampilan Cetak / Simpan PDF
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Formulir Laporan Kejadian', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1A237E),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _namaController,
+                decoration: const InputDecoration(labelText: 'Nama Petugas Satpam', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Nama wajib diisi' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _posController,
+                decoration: const InputDecoration(labelText: 'Nama Pos / Area Patroli', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Area patroli wajib diisi' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _deskripsiController,
+                maxLines: 4,
+                decoration: const InputDecoration(labelText: 'Deskripsi Detail Temuan / Insiden', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Deskripsi wajib diisi' : null,
+              ),
+              const SizedBox(height: 20),
+
+              // Tombol Ambil Foto
+              const Text('Dokumentasi Foto Kejadian:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              _imageFile != null
+                  ? Image.file(_imageFile!, height: 180, width: double.infinity, fit: BoxFit.cover)
+                  : Container(
+                      height: 120,
+                      width: double.infinity,
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                    ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _takePhoto,
+                icon: const Icon(Icons.camera),
+                label: const Text('Ambil Foto Bukti (Kamera)'),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A237E), foregroundColor: Colors.white),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Tombol Generate PDF
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _generatePdf,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('CETAK & DOWNLOAD LAPORAN PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SCREEN ABSEN GPS & SELFIE
+// ---------------------------------------------------------------------------
+class AbsenGpsScreen extends StatefulWidget {
+  const AbsenGpsScreen({super.key});
+
+  @override
+  State<AbsenGpsScreen> createState() => _AbsenGpsScreenState();
+}
+
+class _AbsenGpsScreenState extends State<AbsenGpsScreen> {
+  String _locationText = "Tekan tombol untuk mengunci lokasi GPS.";
+  File? _selfieFile;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _getLocationAndSelfie() async {
+    // 1. Ambil Foto Selfie
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
+    if (photo == null) return;
+
+    setState(() {
+      _selfieFile = File(photo.path);
+      _locationText = "Mencari koordinat GPS...";
+    });
+
+    // 2. Ambil Koordinat GPS
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _locationText = "Lat: ${pos.latitude}\nLong: ${pos.longitude}";
+      });
+    } catch (e) {
+      setState(() {
+        _locationText = "Gagal mengambil GPS: $e";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Absen GPS Selfie', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1A237E),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _selfieFile != null
+                ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_selfieFile!, height: 220, fit: BoxFit.cover))
+                : Container(
+                    height: 200,
+                    decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
+                    child: const Center(child: Icon(Icons.person, size: 80, color: Colors.grey)),
+                  ),
+            const SizedBox(height: 20),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(_locationText, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _getLocationAndSelfie,
+                icon: const Icon(Icons.location_on),
+                label: const Text('AMBIL SELFIE & KUNCI LOKASI GPS'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
