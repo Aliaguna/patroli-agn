@@ -25,15 +25,20 @@ jobs:
 
     - name: Repair Android Structure & Build
       run: |
+        # Simpan file penting kita
         mkdir -p temp_backup
         cp -r lib temp_backup/
         cp pubspec.yaml temp_backup/
         
+        # Buat proyek baru
         flutter create --org com.aliaguna --project-name patroli_agn temp_app
         
-        cp -r temp_backup/lib/* temp_app/lib/
+        # Bersihkan folder lib bawaan lalu timpa dengan milik kita
+        rm -rf temp_app/lib
+        cp -r temp_backup/lib temp_app/lib
         cp temp_backup/pubspec.yaml temp_app/pubspec.yaml
         
+        # Build Debug APK
         cd temp_app
         flutter pub get
         flutter build apk --debug
