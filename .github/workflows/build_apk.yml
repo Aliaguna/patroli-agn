@@ -30,11 +30,14 @@ jobs:
         rm -rf temp_app/lib
         cp -r lib temp_app/lib
         cp pubspec.yaml temp_app/pubspec.yaml
-        
         if [ -d "assets" ]; then
           cp -r assets temp_app/
         fi
-        
+
+        # Inject Izin Kamera & Penyimpanan ke AndroidManifest
+        MANIFEST_PATH="temp_app/android/app/src/main/AndroidManifest.xml"
+        sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA"\/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"\/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"\/>' $MANIFEST_PATH
+
         cd temp_app
         flutter pub get
         flutter build apk --debug
