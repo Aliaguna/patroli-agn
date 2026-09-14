@@ -1,157 +1,260 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 
 void main() {
-  runApp(const PatroliApp());
+  runApp(const PatroliAGNApp());
 }
 
-class PatroliApp extends StatelessWidget {
-  const PatroliApp({super.key});
+class PatroliAGNApp extends StatelessWidget {
+  const PatroliAGNApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Patroli PT. AGN',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.indigo),
-      home: const FormLaporanScreen(),
+      title: 'Patroli AGN',
+      theme: ThemeData(
+        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFF0F172A), // Dark Slate Grey Nyaman di Mata
+      ),
+      home: const DashboardScreen(),
     );
   }
 }
 
-class FormLaporanScreen extends StatefulWidget {
-  const FormLaporanScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
 
   @override
-  State<FormLaporanScreen> createState() => _FormLaporanScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _FormLaporanScreenState extends State<FormLaporanScreen> {
-  final _namaController = TextEditingController();
+class _DashboardScreenState extends State<DashboardScreen> {
   final _posController = TextEditingController();
   final _deskripsiController = TextEditingController();
-  bool _isLoading = false;
-  XFile? _imageFile;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _takePhoto() async {
-    final XFile? photo = await _picker.pickImage(source: ImageSource.camera, imageQuality: 50);
-    if (photo != null) {
-      setState(() {
-        _imageFile = photo;
-      });
-    }
-  }
-
-  Future<void> _kirimKeFirebase() async {
-    if (_namaController.text.isEmpty || _posController.text.isEmpty || _deskripsiController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap lengkapi semua kolom formulir!')),
-      );
-      return;
-    }
-
-    setState(() { _isLoading = true; });
-
-    try {
-      String base64Image = "";
-      if (_imageFile != null) {
-        List<int> imageBytes = await _imageFile!.readAsBytes();
-        base64Image = "data:image/jpeg;base64,${base64Encode(imageBytes)}";
-      }
-
-      final url = Uri.parse('https://firestore.googleapis.com/v1/projects/patroli-agn/databases/(default)/documents/laporan_patroli');
-      
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "fields": {
-            "nama": {"stringValue": _namaController.text},
-            "pos": {"stringValue": _posController.text},
-            "deskripsi": {"stringValue": _deskripsiController.text},
-            "waktu": {"stringValue": DateTime.now().toString().substring(0, 16)},
-            "fotoUrl": {"stringValue": base64Image},
-            "timestamp": {"timestampValue": DateTime.now().toUtc().toIso8601String()}
-          }
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Laporan Berhasil Terkirim ke Dashboard Admin!')),
-        );
-        _namaController.clear();
-        _posController.clear();
-        _deskripsiController.clear();
-        setState(() { _imageFile = null; });
-      } else {
-        throw Exception("Gagal mengirim data");
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal Terkoneksi: $e')),
-      );
-    } finally {
-      setState(() { _isLoading = false; });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Input Laporan Patroli AGN', style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF1A237E),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        backgroundColor: const Color(0xFF1E1E1E),
+        elevation: 2,
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _namaController,
-              decoration: const InputDecoration(labelText: 'Nama Petugas Satpam', border: OutlineInputBorder()),
+            // Logo Perusahaan di AppBar
+            Image.network(
+              'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
+              height: 36,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.shield, color: Colors.redAccent, size: 28),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _posController,
-              decoration: const InputDecoration(labelText: 'Nama Pos / Area Patroli', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _deskripsiController,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Deskripsi Temuan & Penyelesaian', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _takePhoto,
-                icon: const Icon(Icons.camera_alt),
-                label: Text(_imageFile == null ? 'AMBIL FOTO BUKTI' : 'FOTO TERAMBIL (UBAH)'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            const SizedBox(width: 10),
+            const Text(
+              'PATROLI AGN',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white,
+                letterSpacing: 1.2,
               ),
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton.icon(
-                    onPressed: _kirimKeFirebase,
-                    icon: const Icon(Icons.send),
-                    label: const Text('KIRIM LAPORAN KE DASHBOARD', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A237E), foregroundColor: Colors.white),
-                  ),
-            ),
           ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // --- KARTU ANGGOTA DIGITAL ELEGAN (TEMA AGN) ---
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B0000), Color(0xFF1A1A1A)], // Gradasi Merah Tua & Hitam AGN
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 1.5), // Frame Emas
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4)),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        // Foto Profil Anggota
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFFFD700), width: 2),
+                            image: const DecorationImage(
+                              image: NetworkImage('https://via.placeholder.com/150'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        // Data Identitas Karyawan
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'AGUS',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Anggota Satpam / Security',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFFFD700), // Akses Emas
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on, size: 14, color: Colors.white70),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Area: Utama / Pos 1',
+                                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // --- FORM INPUT LAPORAN PATROLI ELEGAN ---
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+                  ],
+                ),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.assignment_sharp, color: Color(0xFFFFD700), size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'Form Laporan Temuan Patroli',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white24, height: 24),
+                    const SizedBox(height: 8),
+                    
+                    // Input Area / Pos
+                    TextField(
+                      controller: _posController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Nama Pos / Area Patroli',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        prefixIcon: const Icon(Icons.place, color: Color(0xFFFFD700)),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Colors.white24),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFFFD700)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    
+                    // Input Deskripsi
+                    TextField(
+                      controller: _deskripsiController,
+                      maxLines: 3,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Deskripsi Temuan & Penyelesaian',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        prefixIcon: const Icon(Icons.notes, color: Color(0xFFFFD700)),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Colors.white24),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFFFD700)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Tombol Ambil Foto Bukti
+                    ElevatedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.camera_alt, color: Colors.black),
+                      label: const Text(
+                        'AMBIL FOTO BUKTI',
+                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD700), // Warna Emas AGN
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Tombol Kirim Laporan
+                    ElevatedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      label: const Text(
+                        'KIRIM LAPORAN KE DASHBOARD',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB91C1C), // Warna Merah Karakter AGN
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
