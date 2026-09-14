@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin Patroli - PT. ALIA GUNA NUSANTARA</title>
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (Library Ekspor Excel) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Header / Navbar -->
+    <nav class="bg-indigo-950 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="assets/logo.png" onerror="this.src='https://via.placeholder.com/45?text=AGN'" class="w-11 h-11 rounded-full bg-white p-1 shadow">
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">DASHBOARD MONITORING PATROLI</h1>
+                    <p class="text-xs text-indigo-300">PT. ALIA GUNA NUSANTARA</p>
+                </div>
+            </div>
+            <button onclick="downloadExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center space-x-2">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Ekspor Rekap Excel</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Content Area -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Total Laporan Patroli</p>
+                    <h3 id="totalLaporan" class="text-3xl font-bold text-indigo-950 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-between p-3 text-indigo-900 text-xl">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Status Sistem Server</p>
+                    <h3 class="text-lg font-bold text-emerald-600 mt-1 flex items-center">
+                        <span class="w-3 h-3 bg-emerald-500 rounded-full mr-2 animate-pulse"></span> Online (Firebase)
+                    </h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-between p-3 text-emerald-700 text-xl">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Area Operasional</p>
+                    <h3 class="text-lg font-bold text-gray-800 mt-1">PT. Alia Guna Nusantara</h3>
+                </div>
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-between p-3 text-amber-700 text-xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Laporan Masuk -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="font-bold text-gray-800 text-lg flex items-center">
+                    <i class="fa-solid fa-list-check text-indigo-900 mr-2"></i> Log Aktivitas Patroli Satpam
+                </h2>
+                <span class="text-xs text-gray-500">Update Otomatis Real-Time</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="patrolTable">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
+                            <th class="px-6 py-3">Waktu</th>
+                            <th class="px-6 py-3">Nama Petugas</th>
+                            <th class="px-6 py-3">Pos / Area</th>
+                            <th class="px-6 py-3">Deskripsi Temuan</th>
+                            <th class="px-6 py-3 text-center">Dokumentasi Foto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-400">Memuat data laporan dari Firebase...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Modular SDK Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase PT. AGN
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRgkg--tI7u-0t6Jaar0OBMYX25hum9g",
+            authDomain: "patroli-agn.firebaseapp.com",
+            projectId: "patroli-agn",
+            storageBucket: "patroli-agn.firebasestorage.app",
+            messagingSenderId: "385430145795",
+            appId: "1:385430145795:web:23ca2274586a145d2d3736",
+            measurementId: "G-6D5JN9ZPZM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.laporanData = [];
+
+        // Stream Data Real-Time dari Firestore
+        const q = query(collection(db, "laporan_patroli"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = "";
+            window.laporanData = [];
+
+            if (snapshot.empty) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Belum ada data laporan patroli yang masuk.</td></tr>`;
+                document.getElementById("totalLaporan").innerText = "0";
+                return;
+            }
+
+            document.getElementById("totalLaporan").innerText = snapshot.size;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                window.laporanData.push(data);
+
+                const row = document.createElement("tr");
+                row.className = "hover:bg-gray-50 transition";
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-900">${data.waktu || '-'}</td>
+                    <td class="px-6 py-4 font-semibold text-indigo-950">${data.nama || '-'}</td>
+                    <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-900 px-2.5 py-1 rounded-md text-xs font-medium border border-indigo-100">${data.pos || '-'}</span></td>
+                    <td class="px-6 py-4">${data.deskripsi || '-'}</td>
+                    <td class="px-6 py-4 text-center">
+                        ${data.fotoUrl 
+                            ? `<a href="${data.fotoUrl}" target="_blank" class="inline-block"><img src="${data.fotoUrl}" class="w-12 h-12 object-cover rounded-lg border shadow-sm hover:scale-110 transition"></a>` 
+                            : `<span class="text-xs text-gray-400 italic">Tanpa Foto</span>`}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        });
+
+        // Fungsi Download Rekapitulasi Excel
+        window.downloadExcel = function() {
+            if (!window.laporanData || window.laporanData.length === 0) {
+                alert("Belum ada data laporan untuk diunduh!");
+                return;
+            }
+
+            const excelData = window.laporanData.map(item => ({
+                "Waktu Laporan": item.waktu || "-",
+                "Nama Petugas Satpam": item.nama || "-",
+                "Pos / Area Patroli": item.pos || "-",
+                "Deskripsi Temuan / Insiden": item.deskripsi || "-",
+                "Link Foto Bukti": item.fotoUrl || "Tidak Ada Foto"
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Patroli AGN");
+            XLSX.writeFile(workbook, `Rekap_Patroli_PT_AGN_${new Date().toISOString().slice(0,10)}.xlsx`);
+        };
+    </script>
+</body>
+</html>
