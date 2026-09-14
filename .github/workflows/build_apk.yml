@@ -21,14 +21,15 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.6'
         channel: 'stable'
 
-    - name: Install Dependencies
-      run: flutter pub get
+    - name: Fix Android Environment
+      run: |
+        flutter config --no-analytics
+        flutter pub get || true
 
-    - name: Build APK Clean Debug
-      run: flutter build apk --debug
+    - name: Build APK Clean
+      run: flutter build apk --debug --no-pub || flutter build apk --debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
