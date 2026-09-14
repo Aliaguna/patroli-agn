@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+// Penyimpanan Riwayat Lokal Sederhana
+List<Map<String, String>> globalRiwayatLaporan = [];
+
 void main() {
   runApp(const PatroliAGNApp());
 }
@@ -113,7 +116,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
                       Text('Status GPS: Siap', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                      Text('Online', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text('Online (Firebase)', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ],
@@ -131,7 +134,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             const SizedBox(height: 14),
 
-            // --- GRID MENU UTAMA (4 MENU SEPERTI FOTO 2) ---
+            // --- GRID MENU UTAMA ---
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -146,7 +149,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   iconColor: Colors.blueAccent,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fitur Scan Checkpoint akan aktif selanjutnya')),
+                      const SnackBar(content: Text('Fitur Scan Checkpoint siap dikembangkan di tahap berikutnya')),
                     );
                   },
                 ),
@@ -157,7 +160,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   iconColor: Colors.orangeAccent,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fitur Absen GPS akan aktif selanjutnya')),
+                      const SnackBar(content: Text('Fitur Absen GPS siap dikembangkan di tahap berikutnya')),
                     );
                   },
                 ),
@@ -179,8 +182,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   icon: Icons.history,
                   iconColor: Colors.tealAccent,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fitur Riwayat Patroli akan aktif selanjutnya')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RiwayatPatroliScreen()),
                     );
                   },
                 ),
@@ -232,7 +236,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
-// --- FORM LAPORAN KEJADIAN (LENGKAP FOTO & KAMERA) ---
+// --- FORM LAPORAN KEJADIAN ---
 class FormLaporanScreen extends StatefulWidget {
   const FormLaporanScreen({super.key});
 
@@ -249,7 +253,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
 
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
 
     if (pickedFile != null) {
       setState(() {
@@ -272,32 +276,55 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
       _isLoading = true;
     });
 
-    try {
-      String? imageBase64;
-      if (_selectedImage != null) {
-        List<int> imageBytes = await _selectedImage!.readAsBytes();
-        imageBase64 = base64Encode(imageBytes);
-      }
+    String nowFormatted = DateTime.now().toString().substring(0, 19);
+    String imageBase64 = '';
+    
+    if (_selectedImage != null) {
+      List<int> imageBytes = await _selectedImage!.readAsBytes();
+      imageBase64 = 'data:image/jpeg;base64,${base64Encode(imageBytes)}';
+    }
 
+    // Direct Firebase Realtime Database Rest API Endpoint
+    final firebaseDbUrl = Uri.parse(
+      'https://patroli-agn-default-rtdb.firebaseio.com/laporan.json',
+    );
+
+    try {
       final response = await http.post(
-        Uri.parse('https://aliaguna.github.io/patroli-agn/api/laporan'),
+        firebaseDbUrl,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
+          'waktu': nowFormatted,
           'nama_petugas': _namaPetugasController.text,
           'pos_area': _posController.text,
           'deskripsi': _deskripsiController.text,
-          'foto': imageBase64 ?? '',
-          'waktu': DateTime.now().toIso8601String(),
+          'foto': imageBase64,
         }),
       );
 
+      // Simpan ke Riwayat Lokal Aplikasi
+      globalRiwayatLaporan.insert(0, {
+        'waktu': nowFormatted,
+        'nama_petugas': _namaPetugasController.text,
+        'pos_area': _posController.text,
+        'deskripsi': _deskripsiController.text,
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Laporan Berhasil Terkirim!')),
+        const SnackBar(content: Text('Laporan Berhasil Terkirim ke Dashboard Web!')),
       );
       Navigator.pop(context);
     } catch (e) {
+      // Simpan Lokal jika koneksi offline
+      globalRiwayatLaporan.insert(0, {
+        'waktu': nowFormatted,
+        'nama_petugas': _namaPetugasController.text,
+        'pos_area': _posController.text,
+        'deskripsi': _deskripsiController.text,
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Laporan tersimpan secara lokal! (Error: $e)')),
+        const SnackBar(content: Text('Laporan tersimpan di Riwayat HP!')),
       );
       Navigator.pop(context);
     } finally {
@@ -326,7 +353,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Kolom Input Nama Petugas (Bisa Diedit Manual)
               TextField(
                 controller: _namaPetugasController,
                 style: const TextStyle(color: Colors.white),
@@ -348,7 +374,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Kolom Input Pos Area
               TextField(
                 controller: _posController,
                 style: const TextStyle(color: Colors.white),
@@ -370,7 +395,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Kolom Input Deskripsi
               TextField(
                 controller: _deskripsiController,
                 maxLines: 3,
@@ -393,7 +417,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Preview Foto
               if (_selectedImage != null)
                 Container(
                   height: 180,
@@ -407,7 +430,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
                   ),
                 ),
 
-              // Tombol Kamera
               ElevatedButton.icon(
                 onPressed: _takePhoto,
                 icon: const Icon(Icons.camera_alt, color: Colors.black),
@@ -423,7 +445,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Tombol Kirim
               ElevatedButton.icon(
                 onPressed: _isLoading ? null : _submitForm,
                 icon: _isLoading
@@ -447,6 +468,57 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// --- TAMPILAN RIWAYAT PATROLI ---
+class RiwayatPatroliScreen extends StatelessWidget {
+  const RiwayatPatroliScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Riwayat Laporan Patroli', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: globalRiwayatLaporan.isEmpty
+          ? const Center(
+              child: Text(
+                'Belum ada riwayat laporan.',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: globalRiwayatLaporan.length,
+              itemBuilder: (context, index) {
+                final item = globalRiwayatLaporan[index];
+                return Card(
+                  color: const Color(0xFF1E293B),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: const Icon(Icons.check_circle, color: Colors.greenAccent, size: 30),
+                    title: Text(
+                      '${item['pos_area']} - ${item['nama_petugas']}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(item['deskripsi'] ?? '', style: const TextStyle(color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        Text('Waktu: ${item['waktu']}', style: const TextStyle(color: Colors.amber, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
