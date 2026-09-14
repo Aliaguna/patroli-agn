@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-// Penyimpanan Riwayat Lokal Sederhana
+// Penyimpanan Riwayat Lokal Aplikasi
 List<Map<String, String>> globalRiwayatLaporan = [];
 
 void main() {
@@ -70,7 +70,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER STATUS SYSTEM & PROFIL ---
+            // --- HEADER STATUS SYSTEM ---
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -149,7 +149,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   iconColor: Colors.blueAccent,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fitur Scan Checkpoint siap dikembangkan di tahap berikutnya')),
+                      const SnackBar(content: Text('Fitur Scan Checkpoint siap dikembangkan')),
                     );
                   },
                 ),
@@ -160,7 +160,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   iconColor: Colors.orangeAccent,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fitur Absen GPS siap dikembangkan di tahap berikutnya')),
+                      const SnackBar(content: Text('Fitur Absen GPS siap dikembangkan')),
                     );
                   },
                 ),
@@ -253,7 +253,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
 
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 40);
 
     if (pickedFile != null) {
       setState(() {
@@ -284,25 +284,29 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
       imageBase64 = 'data:image/jpeg;base64,${base64Encode(imageBytes)}';
     }
 
-    // Direct Firebase Realtime Database Rest API Endpoint
+    // Endpoint Firebase Realtime Database
     final firebaseDbUrl = Uri.parse(
       'https://patroli-agn-default-rtdb.firebaseio.com/laporan.json',
     );
+
+    final payload = {
+      'waktu': nowFormatted,
+      'nama_petugas': _namaPetugasController.text,
+      'namaPetugas': _namaPetugasController.text,
+      'pos_area': _posController.text,
+      'posArea': _posController.text,
+      'deskripsi': _deskripsiController.text,
+      'foto': imageBase64,
+    };
 
     try {
       final response = await http.post(
         firebaseDbUrl,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'waktu': nowFormatted,
-          'nama_petugas': _namaPetugasController.text,
-          'pos_area': _posController.text,
-          'deskripsi': _deskripsiController.text,
-          'foto': imageBase64,
-        }),
+        body: jsonEncode(payload),
       );
 
-      // Simpan ke Riwayat Lokal Aplikasi
+      // Catat ke Riwayat Lokal Aplikasi
       globalRiwayatLaporan.insert(0, {
         'waktu': nowFormatted,
         'nama_petugas': _namaPetugasController.text,
@@ -310,12 +314,14 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
         'deskripsi': _deskripsiController.text,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Laporan Berhasil Terkirim ke Dashboard Web!')),
-      );
-      Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Laporan Berhasil Terkirim ke Dashboard!')),
+        );
+        Navigator.pop(context);
+      }
     } catch (e) {
-      // Simpan Lokal jika koneksi offline
+      // Catat ke Riwayat Lokal jika jaringan terkendala
       globalRiwayatLaporan.insert(0, {
         'waktu': nowFormatted,
         'nama_petugas': _namaPetugasController.text,
@@ -323,14 +329,18 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
         'deskripsi': _deskripsiController.text,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Laporan tersimpan di Riwayat HP!')),
-      );
-      Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Laporan tersimpan di Riwayat HP!')),
+        );
+        Navigator.pop(context);
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
