@@ -1,29 +1,281 @@
-// --- APP BAR DENGAN LOGO RESMI AGN ---
-appBar: AppBar(
-  backgroundColor: const Color(0xFF1E1E1E),
-  elevation: 3,
-  centerTitle: true,
-  title: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      // Memanggil logo fisik dari repositori GitHub
-      Image.network(
-        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
-        height: 38,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) =>
-            const Icon(Icons.shield, color: Color(0xFFFFD700), size: 28),
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+
+List<Map<String, String>> globalRiwayatLaporan = [];
+
+void main() {
+  runApp(const PatroliAGNApp());
+}
+
+class PatroliAGNApp extends StatelessWidget {
+  const PatroliAGNApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Patroli AGN',
+      theme: ThemeData(
+        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
       ),
-      const SizedBox(width: 10),
-      const Text(
-        'PATROLI PT. AGN',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-          color: Colors.white,
-          letterSpacing: 1.2,
+      home: const MainHomeScreen(),
+    );
+  }
+}
+
+class MainHomeScreen extends StatefulWidget {
+  const MainHomeScreen({super.key});
+
+  @override
+  State<MainHomeScreen> createState() => _MainHomeScreenState();
+}
+
+class _MainHomeScreenState extends State<MainHomeScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        elevation: 2,
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.network(
+              'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
+              height: 36,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.shield, color: Colors.amber, size: 28),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'PATROLI PT. AGN',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF8B0000), Color(0xFF1A1A1A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Image.network(
+                        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
+                        height: 40,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.shield, color: Colors.amber, size: 30),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Sistem Operasional Patroli', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Text('PT. Alia Guna Nusantara', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const Divider(color: Colors.white24, height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text('Status GPS: Siap', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      Text('Online (Firebase SG)', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text('Menu Utama Patroli', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 14),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              children: [
+                _buildMenuCard(context, title: 'Scan Checkpoint', icon: Icons.qr_code_scanner, iconColor: Colors.blueAccent, onTap: () {}),
+                _buildMenuCard(context, title: 'Absen GPS', icon: Icons.my_location, iconColor: Colors.orangeAccent, onTap: () {}),
+                _buildMenuCard(context, title: 'Laporan Kejadian', icon: Icons.assignment, iconColor: Colors.redAccent, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FormLaporanScreen()));
+                }),
+                _buildMenuCard(context, title: 'Riwayat Patroli', icon: Icons.history, iconColor: Colors.tealAccent, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const RiwayatPatroliScreen()));
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(BuildContext context, {required String title, required IconData icon, required Color iconColor, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 36),
+            const SizedBox(height: 10),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FormLaporanScreen extends StatefulWidget {
+  const FormLaporanScreen({super.key});
+
+  @override
+  State<FormLaporanScreen> createState() => _FormLaporanScreenState();
+}
+
+class _FormLaporanScreenState extends State<FormLaporanScreen> {
+  final _namaPetugasController = TextEditingController(text: 'AGUS');
+  final _posController = TextEditingController();
+  final _deskripsiController = TextEditingController();
+  File? _selectedImage;
+  bool _isLoading = false;
+
+  Future<void> _takePhoto() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 30);
+    if (pickedFile != null) {
+      setState(() { _selectedImage = File(pickedFile.path); });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_namaPetugasController.text.isEmpty || _posController.text.isEmpty || _deskripsiController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Harap isi semua kolom!')));
+      return;
+    }
+
+    setState(() { _isLoading = true; });
+
+    String nowFormatted = DateTime.now().toString().substring(0, 19);
+    String imageBase64 = '';
+    if (_selectedImage != null) {
+      List<int> imageBytes = await _selectedImage!.readAsBytes();
+      imageBase64 = 'data:image/jpeg;base64,${base64Encode(imageBytes)}';
+    }
+
+    final firebaseDbUrl = Uri.parse('https://patroli-agn-default-rtdb.asia-southeast1.firebasedatabase.app/laporan.json');
+
+    try {
+      await http.post(
+        firebaseDbUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'waktu': nowFormatted,
+          'nama_petugas': _namaPetugasController.text,
+          'pos_area': _posController.text,
+          'deskripsi': _deskripsiController.text,
+          'foto': imageBase64,
+        }),
+      );
+
+      globalRiwayatLaporan.insert(0, {
+        'waktu': nowFormatted,
+        'nama_petugas': _namaPetugasController.text,
+        'pos_area': _posController.text,
+        'deskripsi': _deskripsiController.text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan Berhasil Terkirim ke Dashboard!')));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mengirim: $e')));
+      }
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Input Laporan', style: TextStyle(color: Colors.white))),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(controller: _namaPetugasController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nama Petugas', labelStyle: TextStyle(color: Colors.white70))),
+            const SizedBox(height: 12),
+            TextField(controller: _posController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Pos / Area Patroli', labelStyle: TextStyle(color: Colors.white70))),
+            const SizedBox(height: 12),
+            TextField(controller: _deskripsiController, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Deskripsi Temuan', labelStyle: TextStyle(color: Colors.white70))),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(onPressed: _takePhoto, icon: const Icon(Icons.camera_alt), label: const Text('AMBIL FOTO BUKTI')),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : _submitForm,
+              icon: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.send),
+              label: const Text('KIRIM LAPORAN'),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1C), minimumSize: const Size(double.infinity, 48)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class RiwayatPatroliScreen extends StatelessWidget {
+  const RiwayatPatroliScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Riwayat Patroli', style: TextStyle(color: Colors.white))),
+      body: globalRiwayatLaporan.isEmpty
+          ? const Center(child: Text('Belum ada riwayat laporan.', style: TextStyle(color: Colors.white70)))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: globalRiwayatLaporan.length,
+              itemBuilder: (context, index) {
+                final item = globalRiwayatLaporan[index];
+                return Card(
+                  color: const Color(0xFF1E293B),
+                  child: ListTile(
+                    title: Text('${item['pos_area']} - ${item['nama_petugas']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    subtitle: Text('${item['deskripsi']}\nWaktu: ${item['waktu']}', style: const TextStyle(color: Colors.white70)),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
