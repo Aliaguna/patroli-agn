@@ -1,4 +1,4 @@
-import 'dart0:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -35,7 +35,6 @@ class MainHomeScreen extends StatefulWidget {
 }
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
-  // Widget Pembantu untuk Memuat Logo Perusahaan Secara Aman
   Widget _buildCompanyLogo({double height = 36}) {
     return Image.network(
       'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
@@ -80,7 +79,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER STATUS SYSTEM & BRANDING ---
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -146,7 +144,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             const SizedBox(height: 14),
 
-            // --- GRID 4 MENU LENGKAP & AKTIF ---
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -269,7 +266,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
-// --- FORM LAPORAN KEJADIAN ---
 class FormLaporanScreen extends StatefulWidget {
   const FormLaporanScreen({super.key});
 
@@ -452,7 +448,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
   }
 }
 
-// --- TAMPILAN RIWAYAT PATROLI ---
 class RiwayatPatroliScreen extends StatelessWidget {
   const RiwayatPatroliScreen({super.key});
 
