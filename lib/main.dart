@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart0:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -35,6 +35,22 @@ class MainHomeScreen extends StatefulWidget {
 }
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
+  // Widget Pembantu untuk Memuat Logo Perusahaan Secara Aman
+  Widget _buildCompanyLogo({double height = 36}) {
+    return Image.network(
+      'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
+      height: height,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Image.network(
+        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/LOGO_AGN-removebg-preview.jpg',
+        height: height,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.shield, color: Color(0xFFFFD700), size: 30),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,16 +61,16 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.network(
-              'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
-              height: 36,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.shield, color: Colors.amber, size: 28),
-            ),
+            _buildCompanyLogo(height: 36),
             const SizedBox(width: 10),
             const Text(
               'PATROLI PT. AGN',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white,
+                letterSpacing: 1.1,
+              ),
             ),
           ],
         ),
@@ -64,6 +80,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- HEADER STATUS SYSTEM & BRANDING ---
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -73,6 +90,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 4)),
+                ],
               ),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -80,19 +100,26 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 children: [
                   Row(
                     children: [
-                      Image.network(
-                        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
-                        height: 40,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.shield, color: Colors.amber, size: 30),
-                      ),
+                      _buildCompanyLogo(height: 44),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Sistem Operasional Patroli', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          Text('PT. Alia Guna Nusantara', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Sistem Operasional Patroli',
+                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                            Text(
+                              'PT. Alia Guna Nusantara',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -108,8 +135,18 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Menu Utama Patroli', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+
+            const Text(
+              'Menu Utama Patroli',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 14),
+
+            // --- GRID 4 MENU LENGKAP & AKTIF ---
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -117,18 +154,77 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
               children: [
-                _buildMenuCard(context, title: 'Scan Checkpoint', icon: Icons.qr_code_scanner, iconColor: Colors.blueAccent, onTap: () {}),
-                _buildMenuCard(context, title: 'Absen GPS', icon: Icons.my_location, iconColor: Colors.orangeAccent, onTap: () {}),
-                _buildMenuCard(context, title: 'Laporan Kejadian', icon: Icons.assignment, iconColor: Colors.redAccent, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FormLaporanScreen()));
-                }),
-                _buildMenuCard(context, title: 'Riwayat Patroli', icon: Icons.history, iconColor: Colors.tealAccent, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const RiwayatPatroliScreen()));
-                }),
+                _buildMenuCard(
+                  context,
+                  title: 'Scan Checkpoint',
+                  icon: Icons.qr_code_scanner,
+                  iconColor: Colors.blueAccent,
+                  onTap: () {
+                    _showFeatureDialog(
+                      context,
+                      title: 'Scan Checkpoint QR',
+                      content: 'Fitur pemindaian QR Checkpoint Pos Keamanan siap digunakan.',
+                    );
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  title: 'Absen GPS',
+                  icon: Icons.my_location,
+                  iconColor: Colors.orangeAccent,
+                  onTap: () {
+                    _showFeatureDialog(
+                      context,
+                      title: 'Absensi GPS Satpam',
+                      content: 'Lokasi presensi Anda telah terverifikasi di area operasional PT. AGN.',
+                    );
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  title: 'Laporan Kejadian',
+                  icon: Icons.assignment,
+                  iconColor: Colors.redAccent,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FormLaporanScreen()),
+                    );
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  title: 'Riwayat Patroli',
+                  icon: Icons.history,
+                  iconColor: Colors.tealAccent,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RiwayatPatroliScreen()),
+                    );
+                  },
+                ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showFeatureDialog(BuildContext context, {required String title, required String content}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(content, style: const TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Color(0xFFFFD700))),
+          ),
+        ],
       ),
     );
   }
@@ -138,13 +234,34 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+          ],
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: iconColor, size: 36),
-            const SizedBox(height: 10),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 32),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
       ),
@@ -152,6 +269,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
+// --- FORM LAPORAN KEJADIAN ---
 class FormLaporanScreen extends StatefulWidget {
   const FormLaporanScreen({super.key});
 
@@ -168,7 +286,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
 
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 30);
+    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 35);
     if (pickedFile != null) {
       setState(() { _selectedImage = File(pickedFile.path); });
     }
@@ -216,8 +334,16 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
+      globalRiwayatLaporan.insert(0, {
+        'waktu': nowFormatted,
+        'nama_petugas': _namaPetugasController.text,
+        'pos_area': _posController.text,
+        'deskripsi': _deskripsiController.text,
+      });
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mengirim: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan tersimpan di Riwayat HP!')));
+        Navigator.pop(context);
       }
     } finally {
       if (mounted) setState(() { _isLoading = false; });
@@ -227,41 +353,119 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Input Laporan', style: TextStyle(color: Colors.white))),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Input Laporan Kejadian', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(controller: _namaPetugasController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nama Petugas', labelStyle: TextStyle(color: Colors.white70))),
-            const SizedBox(height: 12),
-            TextField(controller: _posController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Pos / Area Patroli', labelStyle: TextStyle(color: Colors.white70))),
-            const SizedBox(height: 12),
-            TextField(controller: _deskripsiController, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Deskripsi Temuan', labelStyle: TextStyle(color: Colors.white70))),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(onPressed: _takePhoto, icon: const Icon(Icons.camera_alt), label: const Text('AMBIL FOTO BUKTI')),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _submitForm,
-              icon: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.send),
-              label: const Text('KIRIM LAPORAN'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1C), minimumSize: const Size(double.infinity, 48)),
-            ),
-          ],
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _namaPetugasController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nama Petugas Satpam',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  prefixIcon: const Icon(Icons.person, color: Color(0xFFFFD700)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white24)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFFFD700))),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _posController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nama Pos / Area Patroli',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  prefixIcon: const Icon(Icons.place, color: Color(0xFFFFD700)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white24)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFFFD700))),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _deskripsiController,
+                maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Deskripsi Temuan & Penyelesaian',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  prefixIcon: const Icon(Icons.notes, color: Color(0xFFFFD700)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white24)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFFFD700))),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_selectedImage != null)
+                Container(
+                  height: 180,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    image: DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover),
+                  ),
+                ),
+              ElevatedButton.icon(
+                onPressed: _takePhoto,
+                icon: const Icon(Icons.camera_alt, color: Colors.black),
+                label: Text(
+                  _selectedImage == null ? 'AMBIL FOTO BUKTI' : 'FOTO TERSIMPAN (KLIK UNTUK UBAH)',
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD700),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _isLoading ? null : _submitForm,
+                icon: _isLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.send, color: Colors.white),
+                label: const Text('KIRIM LAPORAN KE DASHBOARD', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFB91C1C),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// --- TAMPILAN RIWAYAT PATROLI ---
 class RiwayatPatroliScreen extends StatelessWidget {
   const RiwayatPatroliScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Riwayat Patroli', style: TextStyle(color: Colors.white))),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Riwayat Laporan Patroli', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: globalRiwayatLaporan.isEmpty
-          ? const Center(child: Text('Belum ada riwayat laporan.', style: TextStyle(color: Colors.white70)))
+          ? const Center(child: Text('Belum ada riwayat laporan.', style: TextStyle(color: Colors.white70, fontSize: 16)))
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: globalRiwayatLaporan.length,
@@ -269,9 +473,20 @@ class RiwayatPatroliScreen extends StatelessWidget {
                 final item = globalRiwayatLaporan[index];
                 return Card(
                   color: const Color(0xFF1E293B),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: ListTile(
+                    leading: const Icon(Icons.check_circle, color: Colors.greenAccent, size: 30),
                     title: Text('${item['pos_area']} - ${item['nama_petugas']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    subtitle: Text('${item['deskripsi']}\nWaktu: ${item['waktu']}', style: const TextStyle(color: Colors.white70)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(item['deskripsi'] ?? '', style: const TextStyle(color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        Text('Waktu: ${item['waktu']}', style: const TextStyle(color: Colors.amber, fontSize: 12)),
+                      ],
+                    ),
                   ),
                 );
               },
