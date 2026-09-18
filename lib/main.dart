@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 List<Map<String, String>> globalRiwayatLaporan = [];
 
@@ -364,11 +365,34 @@ class FormLaporanScreen extends StatefulWidget {
 }
 
 class _FormLaporanScreenState extends State<FormLaporanScreen> {
-  final _namaPetugasController = TextEditingController(text: 'AGUS');
+  final _namaPetugasController = TextEditingController();
   final _posController = TextEditingController();
   final _deskripsiController = TextEditingController();
   File? _selectedImage;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedNama();
+  }
+
+  // Mengambil nama petugas tersimpan di HP
+  Future<void> _loadSavedNama() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? savedNama = prefs.getString('saved_nama_petugas');
+    if (savedNama != null && savedNama.isNotEmpty) {
+      setState(() {
+        _namaPetugasController.text = savedNama;
+      });
+    }
+  }
+
+  // Menyimpan nama petugas ke HP
+  Future<void> _saveNama(String nama) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('saved_nama_petugas', nama);
+  }
 
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
@@ -386,6 +410,9 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
 
     setState(() { _isLoading = true; });
 
+    // Simpan nama otomatis agar tidak perlu diketik ulang
+    await _saveNama(_namaPetugasController.text.trim());
+
     String nowFormatted = DateTime.now().toString().substring(0, 19);
     String imageBase64 = '';
     if (_selectedImage != null) {
@@ -401,18 +428,18 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'waktu': nowFormatted,
-          'nama_petugas': _namaPetugasController.text,
-          'pos_area': _posController.text,
-          'deskripsi': _deskripsiController.text,
+          'nama_petugas': _namaPetugasController.text.trim(),
+          'pos_area': _posController.text.trim(),
+          'deskripsi': _deskripsiController.text.trim(),
           'foto': imageBase64,
         }),
       );
 
       globalRiwayatLaporan.insert(0, {
         'waktu': nowFormatted,
-        'nama_petugas': _namaPetugasController.text,
-        'pos_area': _posController.text,
-        'deskripsi': _deskripsiController.text,
+        'nama_petugas': _namaPetugasController.text.trim(),
+        'pos_area': _posController.text.trim(),
+        'deskripsi': _deskripsiController.text.trim(),
       });
 
       if (mounted) {
@@ -422,9 +449,9 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
     } catch (e) {
       globalRiwayatLaporan.insert(0, {
         'waktu': nowFormatted,
-        'nama_petugas': _namaPetugasController.text,
-        'pos_area': _posController.text,
-        'deskripsi': _deskripsiController.text,
+        'nama_petugas': _namaPetugasController.text.trim(),
+        'pos_area': _posController.text.trim(),
+        'deskripsi': _deskripsiController.text.trim(),
       });
 
       if (mounted) {
