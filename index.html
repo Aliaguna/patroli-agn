@@ -1,282 +1,134 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Monitoring Patroli - PT. AGN</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0F172A; color: #ffffff; margin: 0; padding: 20px; }
+    .header { display: flex; align-items: center; justify-content: space-between; background: #1E1E1E; padding: 15px 25px; border-radius: 12px; border-bottom: 3px solid #FFD700; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .header-left { display: flex; align-items: center; gap: 15px; }
+    .header-left img { height: 50px; width: auto; }
+    .header-title h2 { margin: 0; font-size: 20px; font-weight: bold; color: #ffffff; }
+    .header-title span { color: #FFD700; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+    .card-container { display: flex; gap: 20px; margin: 20px 0; }
+    .card { flex: 1; background: #1E293B; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+    .card h3 { margin: 0 0 10px 0; font-size: 13px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card p { margin: 0; font-size: 26px; font-weight: bold; color: #FFD700; }
+    .status-online { color: #22C55E !important; font-size: 18px !important; }
+    .table-container { background: #1E293B; border-radius: 12px; border: 1px solid #334155; overflow: hidden; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #8B0000; color: #ffffff; padding: 14px 18px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 14px 18px; border-bottom: 1px solid #334155; font-size: 14px; color: #E2E8F0; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #26334D; }
+    .img-preview { width: 65px; height: 65px; object-fit: cover; border-radius: 8px; border: 1.5px solid #FFD700; }
+    .badge-no-img { color: #94A3B8; font-style: italic; font-size: 12px; }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
 
-List<Map<String, String>> globalRiwayatLaporan = [];
+  <!-- HEADER BRANDING PT AGN -->
+  <div class="header">
+    <div class="header-left">
+      <img src="https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png" alt="Logo PT AGN" onerror="this.src='https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/LOGO_AGN-removebg-preview.jpg'">
+      <div class="header-title">
+        <h2>DASHBOARD MONITORING PATROLI</h2>
+        <span>PT. ALIA GUNA NUSANTARA</span>
+      </div>
+    </div>
+  </div>
 
-void main() {
-  runApp(const PatroliAGNApp());
-}
+  <!-- KARTU STATISTIK SYSTEM -->
+  <div class="card-container">
+    <div class="card">
+      <h3>Total Laporan Patroli</h3>
+      <p id="totalLaporan">0</p>
+    </div>
+    <div class="card">
+      <h3>Status Server Real-Time</h3>
+      <p class="status-online">● Online (Firebase SG)</p>
+    </div>
+    <div class="card">
+      <h3>Area Operasional</h3>
+      <p style="color: #ffffff; font-size: 18px;">PT. Alia Guna Nusantara</p>
+    </div>
+  </div>
 
-class PatroliAGNApp extends StatelessWidget {
-  const PatroliAGNApp({super.key});
+  <h3 style="margin-top: 25px; margin-bottom: 12px; color: #F8FAFC;">Log Aktivitas Patroli Satpam</h3>
+  
+  <!-- TABEL LAPORAN REALTIME -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>WAKTU</th>
+          <th>NAMA PETUGAS</th>
+          <th>POS / AREA PATROLI</th>
+          <th>DESKRIPSI TEMUAN</th>
+          <th>DOKUMENTASI FOTO</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="5" style="text-align: center; color: #94A3B8; padding: 30px;">
+            Memuat data laporan real-time dari Firebase...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Patroli AGN',
-      theme: ThemeData(
-        fontFamily: 'Roboto',
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-      ),
-      home: const MainHomeScreen(),
-    );
-  }
-}
+  <script>
+    // Konfigurasi Firebase Realtime Database SG Resmi
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRgkgi--tI7u-0t6Jaar0OBMYX25hum9g",
+      authDomain: "patroli-agn.firebaseapp.com",
+      databaseURL: "https://patroli-agn-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "patroli-agn",
+      storageBucket: "patroli-agn.firebasestorage.app",
+      messagingSenderId: "385430145795",
+      appId: "1:385430145795:web:23ca2274586a145d2d3736"
+    };
 
-class MainHomeScreen extends StatefulWidget {
-  const MainHomeScreen({super.key});
+    firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref('laporan');
 
-  @override
-  State<MainHomeScreen> createState() => _MainHomeScreenState();
-}
+    // Mendengarkan Pembaruan Data Secara Real-Time
+    dbRef.on('value', (snapshot) => {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      const data = snapshot.val();
+      
+      if (!data) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94A3B8; padding: 30px;">Belum ada laporan masuk dari petugas.</td></tr>';
+        document.getElementById('totalLaporan').innerText = '0';
+        return;
+      }
 
-class _MainHomeScreenState extends State<MainHomeScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
-        elevation: 2,
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.network(
-              'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
-              height: 36,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.shield, color: Colors.amber, size: 28),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'PATROLI PT. AGN',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B0000), Color(0xFF1A1A1A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Image.network(
-                        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
-                        height: 40,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.shield, color: Colors.amber, size: 30),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Sistem Operasional Patroli', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          Text('PT. Alia Guna Nusantara', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Divider(color: Colors.white24, height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('Status GPS: Siap', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                      Text('Online (Firebase SG)', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text('Menu Utama Patroli', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 14),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              children: [
-                _buildMenuCard(context, title: 'Scan Checkpoint', icon: Icons.qr_code_scanner, iconColor: Colors.blueAccent, onTap: () {}),
-                _buildMenuCard(context, title: 'Absen GPS', icon: Icons.my_location, iconColor: Colors.orangeAccent, onTap: () {}),
-                _buildMenuCard(context, title: 'Laporan Kejadian', icon: Icons.assignment, iconColor: Colors.redAccent, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FormLaporanScreen()));
-                }),
-                _buildMenuCard(context, title: 'Riwayat Patroli', icon: Icons.history, iconColor: Colors.tealAccent, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const RiwayatPatroliScreen()));
-                }),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      const keys = Object.keys(data).reverse();
+      document.getElementById('totalLaporan').innerText = keys.length;
 
-  Widget _buildMenuCard(BuildContext context, {required String title, required IconData icon, required Color iconColor, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: iconColor, size: 36),
-            const SizedBox(height: 10),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-          ],
-        ),
-      ),
-    );
-  }
-}
+      keys.forEach((key) => {
+        const item = data[key];
+        const fotoHtml = item.foto && item.foto.length > 50 
+          ? `<img src="${item.foto}" class="img-preview" alt="Foto Temuan"/>` 
+          : `<span class="badge-no-img">Tanpa Foto</span>`;
 
-class FormLaporanScreen extends StatefulWidget {
-  const FormLaporanScreen({super.key});
-
-  @override
-  State<FormLaporanScreen> createState() => _FormLaporanScreenState();
-}
-
-class _FormLaporanScreenState extends State<FormLaporanScreen> {
-  final _namaPetugasController = TextEditingController(text: 'AGUS');
-  final _posController = TextEditingController();
-  final _deskripsiController = TextEditingController();
-  File? _selectedImage;
-  bool _isLoading = false;
-
-  Future<void> _takePhoto() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 30);
-    if (pickedFile != null) {
-      setState(() { _selectedImage = File(pickedFile.path); });
-    }
-  }
-
-  Future<void> _submitForm() async {
-    if (_namaPetugasController.text.isEmpty || _posController.text.isEmpty || _deskripsiController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Harap isi semua kolom!')));
-      return;
-    }
-
-    setState(() { _isLoading = true; });
-
-    String nowFormatted = DateTime.now().toString().substring(0, 19);
-    String imageBase64 = '';
-    if (_selectedImage != null) {
-      List<int> imageBytes = await _selectedImage!.readAsBytes();
-      imageBase64 = 'data:image/jpeg;base64,${base64Encode(imageBytes)}';
-    }
-
-    // Endpoint Firebase Singapore Resmi dari Screenshot
-    final firebaseDbUrl = Uri.parse('https://patroli-agn-default-rtdb.asia-southeast1.firebasedatabase.app/laporan.json');
-
-    try {
-      await http.post(
-        firebaseDbUrl,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'waktu': nowFormatted,
-          'nama_petugas': _namaPetugasController.text,
-          'pos_area': _posController.text,
-          'deskripsi': _deskripsiController.text,
-          'foto': imageBase64,
-        }),
-      );
-
-      globalRiwayatLaporan.insert(0, {
-        'waktu': nowFormatted,
-        'nama_petugas': _namaPetugasController.text,
-        'pos_area': _posController.text,
-        'deskripsi': _deskripsiController.text,
+        const row = `<tr>
+          <td style="color:#FFD700; font-weight:600;">${item.waktu || '-'}</td>
+          <td><b>${item.nama_petugas || item.namaPetugas || '-'}</b></td>
+          <td>${item.pos_area || item.posArea || '-'}</td>
+          <td>${item.deskripsi || '-'}</td>
+          <td>${fotoHtml}</td>
+        </tr>`;
+        tbody.innerHTML += row;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan Berhasil Terkirim ke Dashboard!')));
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mengirim: $e')));
-      }
-    } finally {
-      if (mounted) setState(() { _isLoading = false; });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Input Laporan', style: TextStyle(color: Colors.white))),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(controller: _namaPetugasController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nama Petugas', labelStyle: TextStyle(color: Colors.white70))),
-            const SizedBox(height: 12),
-            TextField(controller: _posController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Pos / Area Patroli', labelStyle: TextStyle(color: Colors.white70))),
-            const SizedBox(height: 12),
-            TextField(controller: _deskripsiController, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Deskripsi Temuan', labelStyle: TextStyle(color: Colors.white70))),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(onPressed: _takePhoto, icon: const Icon(Icons.camera_alt), label: const Text('AMBIL FOTO BUKTI')),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _submitForm,
-              icon: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.send),
-              label: const Text('KIRIM LAPORAN'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1C), minimumSize: const Size(double.infinity, 48)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class RiwayatPatroliScreen extends StatelessWidget {
-  const RiwayatPatroliScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: const Color(0xFF1E1E1E), title: const Text('Riwayat Patroli', style: TextStyle(color: Colors.white))),
-      body: globalRiwayatLaporan.isEmpty
-          ? const Center(child: Text('Belum ada riwayat laporan.', style: TextStyle(color: Colors.white70)))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: globalRiwayatLaporan.length,
-              itemBuilder: (context, index) {
-                final item = globalRiwayatLaporan[index];
-                return Card(
-                  color: const Color(0xFF1E293B),
-                  child: ListTile(
-                    title: Text('${item['pos_area']} - ${item['nama_petugas']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    subtitle: Text('${item['deskripsi']}\nWaktu: ${item['waktu']}', style: const TextStyle(color: Colors.white70)),
-                  ),
-                );
-              },
-            ),
-    );
-  }
-}
+    });
+  </script>
+</body>
+</html>
