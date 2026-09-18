@@ -31,7 +31,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <!-- SheetJS Library for Excel Export -->
+  <!-- SheetJS Library untuk Ekspor Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -153,7 +153,6 @@
       });
     });
 
-    // FUNGSI UNTUK EKSPOR REKAP LAPORAN KE EXCEL (.XLSX)
     function exportToExcel() {
       if (reportsArray.length === 0) {
         alert("Belum ada data laporan untuk diekspor!");
