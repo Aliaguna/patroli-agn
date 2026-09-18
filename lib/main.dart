@@ -1,4 +1,4 @@
-import 'dart0:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -40,8 +40,13 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
       height: height,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) =>
-          const Icon(Icons.shield, color: Color(0xFFFFD700), size: 30),
+      errorBuilder: (context, error, stackTrace) => Image.network(
+        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/LOGO_AGN-removebg-preview.png',
+        height: height,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.shield, color: Color(0xFFFFD700), size: 30),
+      ),
     );
   }
 
@@ -274,7 +279,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
-// Modul Layar Pemindai Kamera QR Code / Barcode Checkpoint
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
 
@@ -352,7 +356,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 }
 
-// Form Laporan Kejadian
 class FormLaporanScreen extends StatefulWidget {
   const FormLaporanScreen({super.key});
 
@@ -535,7 +538,6 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
   }
 }
 
-// Tampilan Riwayat Patroli
 class RiwayatPatroliScreen extends StatelessWidget {
   const RiwayatPatroliScreen({super.key});
 
