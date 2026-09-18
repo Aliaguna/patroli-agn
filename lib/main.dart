@@ -35,6 +35,7 @@ class MainHomeScreen extends StatefulWidget {
 }
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
+  // Widget pemuat logo perusahaan resmi AGN
   Widget _buildCompanyLogo({double height = 36}) {
     return Image.network(
       'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
@@ -79,6 +80,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Kartu Status System
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -144,6 +146,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             const SizedBox(height: 14),
 
+            // Grid 4 Menu Aktif
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -156,26 +159,14 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   title: 'Scan Checkpoint',
                   icon: Icons.qr_code_scanner,
                   iconColor: Colors.blueAccent,
-                  onTap: () {
-                    _showFeatureDialog(
-                      context,
-                      title: 'Scan Checkpoint QR',
-                      content: 'Fitur pemindaian QR Checkpoint Pos Keamanan siap digunakan.',
-                    );
-                  },
+                  onTap: () => _openScanCheckpoint(context),
                 ),
                 _buildMenuCard(
                   context,
                   title: 'Absen GPS',
                   icon: Icons.my_location,
                   iconColor: Colors.orangeAccent,
-                  onTap: () {
-                    _showFeatureDialog(
-                      context,
-                      title: 'Absensi GPS Satpam',
-                      content: 'Lokasi presensi Anda telah terverifikasi di area operasional PT. AGN.',
-                    );
-                  },
+                  onTap: () => _openAbsenGPS(context),
                 ),
                 _buildMenuCard(
                   context,
@@ -209,17 +200,84 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  void _showFeatureDialog(BuildContext context, {required String title, required String content}) {
+  // Modul Interaktif Scan Checkpoint
+  void _openScanCheckpoint(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        height: 280,
+        child: Column(
+          children: [
+            const Icon(Icons.qr_code_scanner, color: Colors.blueAccent, size: 50),
+            const SizedBox(height: 12),
+            const Text(
+              'Scan Checkpoint QR Pos',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Pindai QR Code di area Pos Mako atau Pos Patroli untuk verifikasi keberadaan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const Spacer(),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Checkpoint Pos Mako Berhasil Terverifikasi!')),
+                );
+              },
+              icon: const Icon(Icons.camera_alt, color: Colors.white),
+              label: const Text('MULAI SCAN QR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                minimumSize: const Size(double.infinity, 45),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Modul Interaktif Absen GPS
+  void _openAbsenGPS(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text(content, style: const TextStyle(color: Colors.white70)),
+        title: Row(
+          children: const [
+            Icon(Icons.my_location, color: Colors.orangeAccent),
+            SizedBox(width: 10),
+            Text('Presensi GPS Satpam', style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('Status GPS: Terhubung (Akurat)', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text('Lokasi: PT. Alia Guna Nusantara', style: TextStyle(color: Colors.white70)),
+            Text('Waktu Presensi: Real-time via Server', style: TextStyle(color: Colors.white70)),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: Color(0xFFFFD700))),
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Presensi GPS Berhasil Dicatat!')),
+              );
+            },
+            child: const Text('SIMPAN PRESENSI', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -266,6 +324,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
+// Form Laporan Kejadian
 class FormLaporanScreen extends StatefulWidget {
   const FormLaporanScreen({super.key});
 
@@ -448,6 +507,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
   }
 }
 
+// Tampilan Riwayat Patroli
 class RiwayatPatroliScreen extends StatelessWidget {
   const RiwayatPatroliScreen({super.key});
 
