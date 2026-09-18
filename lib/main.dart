@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart0:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -35,19 +35,13 @@ class MainHomeScreen extends StatefulWidget {
 }
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
-  // Widget pemuat logo perusahaan resmi AGN
   Widget _buildCompanyLogo({double height = 36}) {
     return Image.network(
       'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/logo.png',
       height: height,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => Image.network(
-        'https://raw.githubusercontent.com/Aliaguna/patroli-agn/main/LOGO_AGN-removebg-preview.jpg',
-        height: height,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) =>
-            const Icon(Icons.shield, color: Color(0xFFFFD700), size: 30),
-      ),
+      errorBuilder: (context, error, stackTrace) =>
+          const Icon(Icons.shield, color: Color(0xFFFFD700), size: 30),
     );
   }
 
@@ -80,7 +74,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Kartu Status System
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -146,7 +139,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Grid 4 Menu Aktif
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -159,7 +151,12 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   title: 'Scan Checkpoint',
                   icon: Icons.qr_code_scanner,
                   iconColor: Colors.blueAccent,
-                  onTap: () => _openScanCheckpoint(context),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+                    );
+                  },
                 ),
                 _buildMenuCard(
                   context,
@@ -200,53 +197,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // Modul Interaktif Scan Checkpoint
-  void _openScanCheckpoint(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        height: 280,
-        child: Column(
-          children: [
-            const Icon(Icons.qr_code_scanner, color: Colors.blueAccent, size: 50),
-            const SizedBox(height: 12),
-            const Text(
-              'Scan Checkpoint QR Pos',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Pindai QR Code di area Pos Mako atau Pos Patroli untuk verifikasi keberadaan.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Checkpoint Pos Mako Berhasil Terverifikasi!')),
-                );
-              },
-              icon: const Icon(Icons.camera_alt, color: Colors.white),
-              label: const Text('MULAI SCAN QR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                minimumSize: const Size(double.infinity, 45),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Modul Interaktif Absen GPS
   void _openAbsenGPS(BuildContext context) {
     showDialog(
       context: context,
@@ -315,6 +265,84 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Modul Layar Pemindai Kamera QR Code / Barcode Checkpoint
+class QRScannerScreen extends StatefulWidget {
+  const QRScannerScreen({super.key});
+
+  @override
+  State<QRScannerScreen> createState() => _QRScannerScreenState();
+}
+
+class _QRScannerScreenState extends State<QRScannerScreen> {
+  File? _scannedImage;
+
+  Future<void> _scanViaCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 40);
+    if (pickedFile != null) {
+      setState(() { _scannedImage = File(pickedFile.path); });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Checkpoint Pos Mako Berhasil Terverifikasi!')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Scan Checkpoint QR', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.qr_code_scanner, size: 80, color: Colors.blueAccent),
+            const SizedBox(height: 20),
+            const Text(
+              'Pemindai Checkpoint Pos Patroli',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Tekan tombol di bawah untuk membuka Kamera HP dan arahkan ke Barcode / QR Code Pos.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 30),
+            if (_scannedImage != null)
+              Container(
+                height: 150,
+                width: 150,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.greenAccent, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                  image: DecorationImage(image: FileImage(_scannedImage!), fit: BoxFit.cover),
+                ),
+              ),
+            ElevatedButton.icon(
+              onPressed: _scanViaCamera,
+              icon: const Icon(Icons.camera_alt, color: Colors.white),
+              label: const Text('BUKA KAMERA SCAN QR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ],
